@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.message-bubble {
+    position: relative;
+    word-wrap: break-word;
+}
+
+.message-bubble::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    top: 0;
+}
+
+.message-bubble.sent::after {
+    right: -8px;
+    border-left: 8px solid #dcf8c6;
+    border-right: 8px solid transparent;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+}
+
+.message-bubble.received::after {
+    left: -8px;
+    border-right: 8px solid white;
+    border-left: 8px solid transparent;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+}
