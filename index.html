@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <title>Interface de Messagerie</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module" src="./src/main.js"></script>
 </head>
 <body class="bg-gray-100 h-screen">
-    <div class="flex h-full max-w-7xl mx-auto bg-white rounded-xl shadow-xl overflow-hidden">
-        <!-- Sidebar -->
-        <div class="flex flex-col gap-4 w-[90px] h-full justify-center items-center bg-white-300">
-            <div id="messagesBtn" class="flex flex-col w-[70px] h-[70px] justify-center items-center border-amber border-2 border-orange-600 bg-yellow-600 rounded-2xl cursor-pointer">
+    <div class="flex h-full max-w-7xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden">
+
+        <div class="flex flex-col gap-4 w-[90px] h-full justify-center items-center bg-[#efe7d7]">
+            <div id="messagesBtn" class="flex flex-col w-[70px] h-[70px] justify-center items-center border-amber border-2 border-orange-300 bg-yellow-600 rounded-2xl cursor-pointer">
                 <i class="bx bxs-message-reply bx-flip-horizontal"></i> 
                 <span class="text-[12px] font-medium text-white">Messages</span>
             </div>
@@ -21,11 +23,11 @@
                 <span class="text-xs font-medium text-gray-600">Groupes</span>
             </div>
             <div id="broadcastBtn" class="flex flex-col w-[70px] h-[70px] justify-center items-center border-amber border-2 border-orange-300 rounded-2xl cursor-pointer">
-                <i class='bx bxs-git-compare' style='color:#000000'></i> 
+                <i class="fa-solid fa-arrows-turn-to-dots"></i>
                 <span class="text-xs font-medium text-gray-600">Diffusions</span>
             </div>
-            <div class="flex flex-col w-[70px] h-[70px] justify-center items-center border-amber border-2 border-orange-300 rounded-2xl">
-                <i class='bx  bxs-archive-alt bx-flip-horizontal'></i> 
+            <div id="archiveBtn" class="flex flex-col w-[70px] h-[70px] justify-center items-center border-amber border-2 border-orange-300 rounded-2xl cursor-pointer">
+                <i class='bx bxs-archive-alt bx-flip-horizontal'></i> 
                 <span class="text-xs font-medium text-gray-600">Archives</span>
             </div>
             <div id="newContactBtn" class="flex flex-col w-[70px] h-[70px] justify-center items-center border-amber border-2 border-orange-300 rounded-2xl cursor-pointer">
@@ -34,14 +36,13 @@
             </div>
         </div>
 
-        <!-- Discussions Panel -->
+
         <div class="w-80 bg-gray-50 border-r border-gray-200 flex flex-col">
-            <!-- Header avec titre -->
+            
             <div class="p-4 border-b border-gray-200">
-                <h2 id="panelTitle" class="text-xl font-semibold text-gray-800">Messages</h2>
+                <h2 id="panelTitle" class="text-xl font-semibold text-gray-800">Discussions</h2>
             </div>
 
-            <!-- Barre de recherche -->
             <div class="p-4 border-b border-gray-200">
                 <div class="relative">
                     <input type="text" 
@@ -51,13 +52,38 @@
                 </div>
             </div>
 
-            <!-- Listes -->
+            <div id="addContactForm" class="hidden p-4 border-b border-gray-200 bg-blue-50">
+                <h3 class="text-sm font-semibold mb-3 text-black-800">Ajouter un contact</h3>
+                <div class="space-y-3">
+                    <input type="text" 
+                           id="contactName"
+                           class="w-full px-3 py-2 bg-white border border-blue-300 rounded-lg text-sm outline-none focus:border-blue-500" 
+                           placeholder="Nom du contact">
+                    <input type="tel" 
+                           id="contactPhone"
+                           pattern="^(7[0578])[0-9]{7}$"
+                           maxlength="9"
+                           class="w-full px-3 py-2 bg-white border border-blue-300 rounded-lg text-sm outline-none focus:border-blue-500" 
+                           placeholder="Numéro de téléphone (77/78/76/70/75)"
+                           oninput="validatePhoneNumber(this)">
+                    <div id="phoneError" class="text-red-500 text-xs hidden mt-1"></div>
+                    <div class="flex gap-2">
+                        <button onclick="addNewContact()" 
+                                class="flex-1 px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-white-600 text-sm">
+                            Ajouter
+                        </button>
+                        <button onclick="cancelAddContact()" 
+                                class="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm">
+                            Annuler
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div id="contactsList" class="flex-1 overflow-y-auto">
-                <!-- Contacts générés dynamiquement -->
             </div>
 
             <div id="groupsList" class="hidden flex-1 overflow-y-auto">
-                <!-- Add Create Group Button -->
                 <div class="p-4 border-b border-gray-200">
                     <button id="createGroupBtn" 
                             class="w-full py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg flex items-center justify-center gap-2">
@@ -65,24 +91,35 @@
                         <span>Créer un groupe</span>
                     </button>
                 </div>
-                <!-- Groups will be listed here -->
+            </div>
+
+            <div id="broadcastList" class="hidden flex-1 overflow-y-auto">
+                
+                <div class="flex-1 overflow-y-auto" id="broadcastContactsList">
+                </div>
+                <div class="p-4 border-t border-gray-200 bg-green-50">
+                   
+                </div>
+            </div>
+
+            <div id="archivedList" class="hidden flex-1 overflow-y-auto">
             </div>
         </div>
 
-        <!-- Chat Area -->
         <div class="flex-1 bg-gray-100 flex flex-col">
-            <!-- Chat Header -->
-            <div class="bg-white p-4 border-b border-gray-200 flex items-center gap-3">
+            <div class="bg-[#efe7d7] p-4 border-b-2 border-b-white flex items-center gap-3">
                 <div class="w-10 h-10 bg-gray-400 rounded-full"></div>
                 <div class="font-semibold text-gray-800">Toto</div>
                 <div class="ml-auto flex items-center gap-2">
                     <button class="w-9 h-9 border-amber border-2 border-orange-300 rounded-full flex items-center justify-center text-white  transition-colors">
                         <i class='bx  bxs-backspace bx-flip-vertical'  style='color:#ff7b00'></i> 
                     </button>
-                   <button class="w-9 h-9 border-amber border-2 rounded-full flex items-center justify-center text-white  transition-colors">
-                        <i class='bx  bxs-trash-alt'  style='color:#5a5a5a'></i> 
+                   <button onclick="if(MessageManager.activeContact) ArchiveManager.archiveContact(MessageManager.activeContact)" 
+                            id="headerArchiveBtn"
+                            class="w-9 h-9 border-amber  border-2 border-gray-800 rounded-full flex items-center justify-center text-white transition-colors">
+                            <i class='bx bxs-archive-alt bx-flip-horizontal' style='color:#5a5a5a'></i> 
                     </button>
-                    <button class="w-9 h-9 border-amber border-2 rounded-full flex items-center justify-center text-white transition-colors">
+                    <button class="w-9 h-9 border-amber border-2 border-black rounded-full flex items-center justify-center text-white transition-colors">
                         <i class='bx  bxs-square'  style='color:#000000'></i> 
                     </button>
                     <button class="w-9 h-9 border-amber border-2 border-red-300 rounded-full flex items-center justify-center text-white transition-colors">
@@ -91,13 +128,11 @@
                 </div>
             </div>
 
-            <!-- Messages Area -->
-            <div class=" bg-[#efe7d7] flex-1 p-5 flex flex-col justify-end gap-4">
+            <div id="Discuter" class="bg-[#efeae2] flex-1 p-4 flex flex-col overflow-y-auto">
               
             </div>
 
-            <!-- Input Area -->
-            <div class="bg-white p-5 border-t border-gray-200 flex items-center gap-4">
+            <div class="bg-white p-5 border-t border-gray-200 flex items-center gap-4 opacity-50 pointer-events-none">
                 <input type="text" 
                        class="flex-1 px-5 py-3 bg-gray-50 border border-gray-300 rounded-full text-sm outline-none focus:border-blue-400" 
                        placeholder="Tapez votre message...">
@@ -108,35 +143,7 @@
         </div>
     </div>
 
-    <!-- Modal pour ajouter un contact -->
-    <div id="newContactModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white p-6 rounded-xl w-96">
-            <h3 class="text-xl font-semibold mb-4">Ajouter un contact</h3>
-            <div class="space-y-4">
-                <input type="text" 
-                       id="contactName"
-                       class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-400" 
-                       placeholder="Nom du contact">
-                <input type="tel" 
-                       id="contactPhone"
-                       class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-400" 
-                       placeholder="Numéro de téléphone">
-            </div>
-            <div class="flex justify-end gap-2 mt-6">
-                <button onclick="closeContactModal()" 
-                        class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                    Annuler
-                </button>
-                <button onclick="addNewContact()" 
-                        class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
-                    Ajouter
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal pour créer un groupe -->
-    <div id="newGroupModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div id="newGroupModal" class=" hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
         <div class="bg-white p-6 rounded-xl w-96">
             <h3 class="text-xl font-semibold mb-4">Créer un groupe</h3>
             <input type="text" 
@@ -144,7 +151,6 @@
                    class="w-full px-4 py-2 mb-4 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:border-orange-400" 
                    placeholder="Nom du groupe">
             <div class="max-h-60 overflow-y-auto mb-4 border rounded-lg" id="contactsForGroup">
-                <!-- La liste des contacts sera générée ici -->
             </div>
             <div class="flex justify-end gap-2">
                 <button onclick="GroupManager.closeModal()" 
@@ -168,31 +174,6 @@
                 </button>
             </div>
             <div id="groupMembersList" class="max-h-60 overflow-y-auto">
-                <!-- La liste des membres sera générée ici -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal pour les messages de diffusion -->
-    <div id="broadcastModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-4 w-96">
-            <h2 class="text-lg font-bold mb-4">Sélectionner les destinataires</h2>
-
-            <div id="contactsForBroadcast" class="max-h-[400px] overflow-y-auto mb-4 border rounded-lg">
-                <!-- La liste des contacts sera générée ici -->
-            </div>
-
-            <div class="flex justify-end gap-2">
-                <button 
-                    onclick="closeBroadcastModal()"
-                    class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                    Annuler
-                </button>
-                <button 
-                    id="sendBroadcastBtn"
-                    class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
-                    Sélectionner
-                </button>
             </div>
         </div>
     </div>
