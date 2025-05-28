@@ -18,33 +18,130 @@ export class GroupManager {
         const modal = document.getElementById('newGroupModal');
         const contactsContainer = document.getElementById('contactsForGroup');
         
-        // Charger la liste des contacts existants
         if (contactsContainer) {
             const users = DatabaseManager.getAllUsers();
-            contactsContainer.innerHTML = users.map(user => `
-                <div class="flex items-center gap-2 p-2 hover:bg-gray-50">
-                    <input type="checkbox" 
-                           id="contact-${user.id}" 
-                           value="${user.id}"
-                           class="rounded text-orange-500 focus:ring-orange-500">
-                    <label for="contact-${user.id}" class="flex-1 cursor-pointer">
-                        <div class="font-medium text-sm">${user.name}</div>
-                        <div class="text-xs text-gray-500">${user.phone || ''}</div>
-                    </label>
+            contactsContainer.innerHTML = `
+                <div class="p-2 border-b border-gray-200">
+                    <button onclick="GroupManager.showNewContactForm()" 
+                            class="w-full py-2 px-3 bg-orange-100 hover:bg-orange-200 text-orange-600 rounded-lg flex items-center gap-2 text-sm">
+                        <i class='bx bx-plus-circle'></i>
+                        <span>Ajouter un nouveau contact</span>
+                    </button>
                 </div>
-            `).join('');
+                ${users.map(user => `
+                    <div class="flex items-center gap-2 p-2 hover:bg-gray-50">
+                        <input type="checkbox" 
+                               id="contact-${user.id}" 
+                               value="${user.id}"
+                               class="rounded text-orange-500 focus:ring-orange-500">
+                        <label for="contact-${user.id}" class="flex-1 cursor-pointer">
+                            <div class="font-medium text-sm">${user.name}</div>
+                            <div class="text-xs text-gray-500">${user.phone || ''}</div>
+                        </label>
+                    </div>
+                `).join('')}
+            `;
         }
 
         modal?.classList.remove('hidden');
     }
 
+    static showNewContactForm() {
+        const currentModal = document.getElementById('newGroupModal');
+        currentModal.innerHTML += `
+            <div id="newContactInGroupModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white p-6 rounded-xl w-96">
+                    <h3 class="text-xl font-semibold mb-4">Ajouter un nouveau contact</h3>
+                    <div class="space-y-3">
+                        <input type="text" 
+                               id="newContactName"
+                               class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:border-orange-500" 
+                               placeholder="Nom du contact">
+                        <input type="tel" 
+                               id="newContactPhone"
+                               pattern="^(7[0578])[0-9]{7}$"
+                               maxlength="9"
+                               class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:border-orange-500" 
+                               placeholder="Numéro de téléphone (77/78/76/70/75)"
+                               oninput="validatePhoneNumber(this)">
+                        <div id="newContactPhoneError" class="text-red-500 text-xs hidden"></div>
+                        <div class="flex justify-end gap-2">
+                            <button onclick="GroupManager.closeNewContactForm()" 
+                                    class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                                Annuler
+                            </button>
+                            <button onclick="GroupManager.addNewContactToGroup()" 
+                                    class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
+                                Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    static closeNewContactForm() {
+        const modal = document.getElementById('newContactInGroupModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    static addNewContactToGroup() {
+        const nameInput = document.getElementById('newContactName');
+        const phoneInput = document.getElementById('newContactPhone');
+        const errorDiv = document.getElementById('newContactPhoneError');
+        
+        const name = nameInput.value.trim();
+        const phone = phoneInput.value.trim();
+        
+        if (!name || !phone) {
+            errorDiv.textContent = 'Veuillez remplir tous les champs';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+        
+        if (!validatePhoneNumber(phoneInput)) {
+            errorDiv.textContent = 'Numéro de téléphone invalide';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+        
+        // Ajouter le nouveau contact
+        const newContact = DatabaseManager.addUser({
+            name: name,
+            phone: phone,
+            status: "online"
+        });
+        
+        // Fermer le formulaire
+        this.closeNewContactForm();
+        
+        // Rafraîchir la liste des contacts dans le modal de groupe
+        this.showCreateGroupModal();
+        
+        // Sélectionner automatiquement le nouveau contact
+        setTimeout(() => {
+            const checkbox = document.getElementById(`contact-${newContact.id}`);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        }, 100);
+    }
+
     static createGroup(name, memberIds = []) {
         // Créer le groupe
         const newGroup = DatabaseManager.addGroup({
-            name: name
+            name: name,
+            created_by: 'admin', // L'ID de l'admin
+            created_at: new Date().toISOString()
         });
 
-        // Ajouter les membres
+        // Ajouter l'admin comme premier membre
+        DatabaseManager.addGroupMember(newGroup.id, 'admin');
+
+        // Ajouter les autres membres
         memberIds.forEach(userId => {
             DatabaseManager.addGroupMember(newGroup.id, userId);
         });
@@ -62,16 +159,18 @@ export class GroupManager {
         const groupsHtml = groups.map(group => {
             const members = DatabaseManager.getGroupMembers(group.id);
             const lastMessage = DatabaseManager.getLastGroupMessage(group.id);
+            const totalMembers = members.length; // Inclut déjà l'admin
             
             return `
-                <div class="flex items-center gap-3 p-4 hover:bg-gray-100 cursor-pointer border-b border-gray-100"
+                <div class="flex items-center gap-3 p-4 hover:bg-gray-200 border-b border-gray-100 cursor-pointer group-item"
+                     onclick="GroupManager.selectGroup(${group.id}, this)"
                      data-group-id="${group.id}">
                     <div class="w-11 h-11 bg-gray-400 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold">
-                        ${group.name.charAt(0).toUpperCase()}
+                        ${this.getInitials(group.name)}
                     </div>
-                    <div class="flex-1 min-w-0" onclick="GroupManager.selectGroup(${group.id})">
+                    <div class="flex-1 min-w-0">
                         <div class="font-semibold text-gray-800 text-sm">${group.name}</div>
-                        <div class="text-xs text-gray-500">${members.length} membres</div>
+                        <div class="text-xs text-gray-500">${totalMembers} membre${totalMembers > 1 ? 's' : ''}</div>
                         ${lastMessage ? `
                             <div class="text-xs text-gray-500 truncate">${lastMessage.content}</div>
                         ` : ''}
@@ -111,16 +210,23 @@ export class GroupManager {
         this.initializeEventListeners();
     }
 
-    static selectGroup(groupId) {
+    static selectGroup(groupId, element) {
         const group = DatabaseManager.getGroupById(groupId);
         if (group) {
-            // Mettre à jour la sélection visuelle
-            document.querySelectorAll('[data-group-id]').forEach(el => 
-                el.classList.remove('bg-gray-100'));
-            document.querySelector(`[data-group-id="${groupId}"]`)?.classList.add('bg-gray-100');
+            // Enlever la sélection précédente
+            document.querySelectorAll('.group-item').forEach(el => {
+                el.classList.remove('bg-gray-300');
+            });
             
-            // Activer le chat pour le groupe
+            // Sélectionner le nouveau groupe
+            element.classList.add('bg-gray-300');
+
+            // Mettre à jour le header et activer le chat
             this.activateGroupChat(groupId);
+            
+            // Stocker le groupe actif dans MessageManager
+            window.MessageManager.activeGroup = groupId;
+            window.MessageManager.activeContact = null;
         }
     }
 
@@ -130,15 +236,25 @@ export class GroupManager {
 
         // Activer la zone de message
         const inputArea = document.querySelector('.bg-white.p-5.border-t');
-        inputArea.classList.remove('opacity-50', 'pointer-events-none');
+        if (inputArea) {
+            inputArea.classList.remove('opacity-50', 'pointer-events-none');
+        }
         
         // Mettre à jour l'en-tête
-        const chatHeader = document.querySelector('.bg-white.p-4.border-b');
-        chatHeader.querySelector('.font-semibold').textContent = group.name;
-        
-        // Stocker l'ID du groupe actif
-        window.MessageManager.activeGroup = groupId;
-        window.MessageManager.activeContact = null;
+        const chatHeader = document.querySelector('.bg-[#efe7d7]').previousElementSibling;
+        if (chatHeader) {
+            const nameElement = chatHeader.querySelector('.font-semibold');
+            if (nameElement) {
+                nameElement.textContent = group.name;
+            }
+            
+            // Mettre à jour l'avatar
+            const avatarElement = chatHeader.querySelector('.w-10.h-10');
+            if (avatarElement) {
+                avatarElement.innerHTML = this.getInitials(group.name);
+                avatarElement.className = 'w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold';
+            }
+        }
         
         // Afficher les messages du groupe
         this.renderGroupMessages(groupId);
@@ -279,25 +395,50 @@ export class GroupManager {
 
     static showGroupMembers(groupId) {
         const group = DatabaseManager.getGroupById(groupId);
+        if (!group) return;
+
         const members = DatabaseManager.getGroupMembers(groupId);
-        
         const membersList = document.getElementById('groupMembersList');
-        membersList.innerHTML = members.map(member => `
+        
+        if (!membersList) return;
+
+        // Commencer par l'admin
+        let html = `
             <div class="flex items-center gap-3 p-2 border-b border-gray-100">
                 <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                    ${member.user.name.charAt(0).toUpperCase()}
+                    ${this.getInitials('Admin')}
                 </div>
                 <div class="flex-1">
-                    <div class="font-medium text-sm">${member.user.name}</div>
-                    <div class="text-xs text-gray-500">${member.user.phone}</div>
+                    <div class="font-medium text-sm">Vous (admin)</div>
                 </div>
-                <button onclick="GroupManager.removeMember(${groupId}, ${member.user_id})" 
-                        class="p-1 text-red-500 hover:bg-red-50 rounded">
-                    <i class='bx bx-user-minus text-sm'></i>
-                </button>
             </div>
-        `).join('');
+        `;
 
+        // Ajouter les autres membres
+        html += members
+            .filter(member => member.user_id !== 'admin') // Exclure l'admin car déjà affiché
+            .map(member => {
+                const user = DatabaseManager.getUserById(member.user_id);
+                if (!user) return '';
+
+                return `
+                    <div class="flex items-center gap-3 p-2 border-b border-gray-100">
+                        <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                            ${this.getInitials(user.name)}
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-sm">${user.name}</div>
+                            <div class="text-xs text-gray-500">${user.phone || ''}</div>
+                        </div>
+                        <button onclick="GroupManager.removeMember(${groupId}, ${user.id})" 
+                                class="p-1 text-red-500 hover:bg-red-50 rounded">
+                            <i class='bx bx-user-minus text-sm'></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+        membersList.innerHTML = html;
         document.getElementById('groupMembersModal').classList.remove('hidden');
     }
 
@@ -342,5 +483,31 @@ export class GroupManager {
 
         this.createGroup(groupName, selectedContacts);
         this.closeModal();
+    }
+
+    // Ajouter une méthode pour obtenir les initiales du nom du groupe
+    static getInitials(name) {
+        const words = name.split(' ');
+        if (words.length >= 2) {
+            return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+        }
+        return words[0].charAt(0).toUpperCase();
+    }
+
+    // Ajouter une nouvelle méthode pour la suppression
+    static deleteGroup() {
+        const activeGroupId = window.MessageManager.activeGroup;
+        if (!activeGroupId) return;
+
+        if (confirm('Êtes-vous sûr de vouloir supprimer ce groupe ?')) {
+            // Supprimer le groupe
+            DatabaseManager.deleteGroup(activeGroupId);
+            
+            // Réinitialiser la zone de chat
+            MessageManager.init();
+            MessageManager.activeGroup = null;
+            
+            this.renderGroups();
+        }
     }
 }

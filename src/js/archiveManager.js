@@ -22,7 +22,9 @@ export class ArchiveManager {
                 <div class="p-4 border-b border-gray-200">
                     <h3 class="text-sm font-semibold text-gray-600 mb-2">Contacts archivés</h3>
                     ${archivedContacts.map(contact => `
-                        <div class="flex items-center gap-3 p-4 hover:bg-gray-100 border-b border-gray-100">
+                        <div class="flex items-center gap-3 p-4 hover:bg-gray-200 border-b border-gray-100 cursor-pointer contact-item" 
+                             onclick="ArchiveManager.selectContact(this, ${contact.id})"
+                             data-contact-id="${contact.id}">
                             <div class="w-11 h-11 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">
                                 ${contact.name.charAt(0).toUpperCase()}
                             </div>
@@ -50,7 +52,9 @@ export class ArchiveManager {
                 <div class="p-4 border-b border-gray-200">
                     <h3 class="text-sm font-semibold text-gray-600 mb-2">Groupes archivés</h3>
                     ${archivedGroups.map(group => `
-                        <div class="flex items-center gap-3 p-4 hover:bg-gray-100 border-b border-gray-100">
+                        <div class="flex items-center gap-3 p-4 hover:bg-gray-200 border-b border-gray-100 cursor-pointer group-item" 
+                             onclick="ArchiveManager.selectGroup(this, ${group.id})"
+                             data-group-id="${group.id}">
                             <div class="w-11 h-11 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">
                                 ${group.name.charAt(0).toUpperCase()}
                             </div>
@@ -80,23 +84,63 @@ export class ArchiveManager {
         }
     }
 
-    static archiveContact(contactId) {
-        DatabaseManager.archiveContact(contactId);
-        ContactManager.renderContacts();
-        this.showArchivedList();
+    static async archiveContact(contactId) {
+        if (!contactId) return;
+
+        const contactElement = document.querySelector(`[data-contact-id="${contactId}"]`);
+        if (!contactElement) return;
+
+        contactElement.style.transition = 'all 0.5s ease';
+        contactElement.style.overflow = 'hidden';
+        
+        requestAnimationFrame(() => {
+            contactElement.style.transform = 'translateX(100%)';
+            contactElement.style.opacity = '0';
+            contactElement.style.maxHeight = `${contactElement.offsetHeight}px`;
+            
+            setTimeout(() => {
+                contactElement.style.maxHeight = '0';
+                contactElement.style.padding = '0';
+                contactElement.style.margin = '0';
+                contactElement.style.border = 'none';
+                
+                setTimeout(() => {
+                    DatabaseManager.archiveContact(contactId);
+                    ContactManager.renderContacts();
+                    this.showArchivedList();
+                    MessageManager.clearChat();
+                }, 500);
+            }, 300);
+        });
     }
 
     static unarchiveContact(contactId) {
-        const users = JSON.parse(localStorage.getItem('users_table') || '[]');
+        if (!contactId) return;
+
+        const contactElement = document.querySelector(`[data-contact-id="${contactId}"]`);
+        if (!contactElement) return;
+
+        contactElement.style.transition = 'all 0.5s ease';
+        contactElement.style.overflow = 'hidden';
         
-        const userIndex = users.findIndex(user => user.id === contactId);
-        if (userIndex !== -1) {
-            users[userIndex].archived = false;
+        requestAnimationFrame(() => {
+            contactElement.style.transform = 'translateY(-20px)';
+            contactElement.style.opacity = '0';
             
-            localStorage.setItem('users_table', JSON.stringify(users));
-            
-            this.updateAfterUnarchive();
-        }
+            setTimeout(() => {
+                contactElement.style.maxHeight = '0';
+                contactElement.style.padding = '0';
+                contactElement.style.margin = '0';
+                contactElement.style.border = 'none';
+                
+                setTimeout(() => {
+                    DatabaseManager.unarchiveContact(contactId);
+                
+                    this.showArchivedList();
+                    ContactManager.renderContacts();
+                }, 500);
+            }, 300);
+        });
     }
 
     static unarchiveGroup(groupId) {
@@ -155,5 +199,26 @@ export class ArchiveManager {
                 }
             }
         });
+    }
+
+
+    static selectContact(element, contactId) {
+       
+        document.querySelectorAll('.contact-item, .group-item').forEach(item => {
+            item.classList.remove('bg-gray-300');
+        });
+        
+    
+        element.classList.add('bg-gray-300');
+    }
+
+    static selectGroup(element, groupId) {
+    
+        document.querySelectorAll('.contact-item, .group-item').forEach(item => {
+            item.classList.remove('bg-gray-300');
+        });
+        
+      
+        element.classList.add('bg-gray-300');
     }
 }

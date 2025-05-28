@@ -1,6 +1,45 @@
 import { users } from '../data/users.js';
 
 export class UserManager {
+    static currentUser = null;
+
+    static init() {
+
+        if (!localStorage.getItem('current_user')) {
+            const adminUser = {
+                id: 'admin',
+                name: 'Admin',
+                phone: '782917770',
+                role: 'admin',
+                status: 'online',
+                created_at: new Date().toISOString()
+            };
+            
+            localStorage.setItem('current_user', JSON.stringify(adminUser));
+            this.currentUser = adminUser;
+        } else {
+            this.currentUser = JSON.parse(localStorage.getItem('current_user'));
+        }
+    }
+
+    static getCurrentUser() {
+        if (!this.currentUser) {
+            this.init();
+        }
+        return this.currentUser;
+    }
+
+    static updateStatus(status) {
+        if (this.currentUser) {
+            this.currentUser.status = status;
+            localStorage.setItem('current_user', JSON.stringify(this.currentUser));
+        }
+    }
+
+    static isAdmin() {
+        return this.getCurrentUser()?.role === 'admin';
+    }
+
     static addUser(name) {
         const newUser = {
             id: users.length + 1,

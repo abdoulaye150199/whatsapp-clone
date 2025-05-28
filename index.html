@@ -107,37 +107,40 @@
         </div>
 
         <div class="flex-1 bg-gray-100 flex flex-col">
-            <div class="bg-[#efe7d7] p-4 border-b-2 border-b-white flex items-center gap-3">
-                <div class="w-10 h-10 bg-gray-400 rounded-full"></div>
-                <div class="font-semibold text-gray-800">Toto</div>
+            <div id="chatHeader" class="bg-[#efe7d7] p-4 border-b-2 border-b-white flex items-center gap-3">
+                <div class="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold"></div>
+                <div class="font-semibold text-gray-800">Selectionnnez un contact</div>
                 <div class="ml-auto flex items-center gap-2">
-                    <button class="w-9 h-9 border-amber border-2 border-orange-300 rounded-full flex items-center justify-center text-white  transition-colors">
-                        <i class='bx  bxs-backspace bx-flip-vertical'  style='color:#ff7b00'></i> 
+                    <button class="w-9 h-9 border-amber border-2 border-orange-300 rounded-full flex items-center justify-center text-white transition-colors">
+                        <i class='bx bxs-backspace bx-flip-vertical' style='color:#ff7b00'></i> 
                     </button>
-                   <button onclick="if(MessageManager.activeContact) ArchiveManager.archiveContact(MessageManager.activeContact)" 
+                    <button onclick="window.ArchiveManager.archiveContact(window.MessageManager.activeContact)" 
                             id="headerArchiveBtn"
-                            class="w-9 h-9 border-amber  border-2 border-gray-800 rounded-full flex items-center justify-center text-white transition-colors">
+                            class="w-9 h-9 border-amber border-2 border-gray-800 rounded-full flex items-center justify-center text-white transition-colors">
                             <i class='bx bxs-archive-alt bx-flip-horizontal' style='color:#5a5a5a'></i> 
                     </button>
                     <button class="w-9 h-9 border-amber border-2 border-black rounded-full flex items-center justify-center text-white transition-colors">
-                        <i class='bx  bxs-square'  style='color:#000000'></i> 
+                        <i class='bx bxs-square' style='color:#000000'></i> 
                     </button>
                     <button class="w-9 h-9 border-amber border-2 border-red-300 rounded-full flex items-center justify-center text-white transition-colors">
-                        <i class='bx  bxs-trash-alt'  style='color:#ff4040'></i> 
+                        <i class='bx bxs-trash-alt' style='color:#ff4040'></i> 
                     </button>
                 </div>
             </div>
 
-            <div id="Discuter" class="bg-[#efeae2] flex-1 p-4 flex flex-col overflow-y-auto">
-              
+            <div id="Discuter" class="bg-[#efe7d7] flex-1 p-4">
+                <div id="messages-container" class="flex flex-col space-y-2">
+                </div>
             </div>
 
             <div class="bg-white p-5 border-t border-gray-200 flex items-center gap-4 opacity-50 pointer-events-none">
                 <input type="text" 
+                       id="messageInput"
                        class="flex-1 px-5 py-3 bg-gray-50 border border-gray-300 rounded-full text-sm outline-none focus:border-blue-400" 
                        placeholder="Tapez votre message...">
-                <button class="w-11 h-11 bg-green-500 rounded-full flex items-center justify-center text-white hover:bg-green-600 transition-colors">
-                  <i class='bx  bxs-arrow-right-stroke bx-flip-vertical'  style='color:#ffffff'></i> 
+                <button id="sendButton"
+                        class="w-11 h-11 bg-green-500 rounded-full flex items-center justify-center text-white hover:bg-green-600 transition-colors">
+                    <i class='bx bxs-arrow-right-stroke bx-flip-vertical' style='color:#ffffff'></i> 
                 </button>
             </div>
         </div>
@@ -175,6 +178,18 @@
             </div>
             <div id="groupMembersList" class="max-h-60 overflow-y-auto">
             </div>
+        </div>
+    </div>
+
+    <div id="notification" class="fixed top-4 right-4 max-w-xs bg-white rounded-lg shadow-lg border border-gray-200 transform transition-all duration-300 scale-0 opacity-0">
+        <div class="p-4 flex items-center gap-3">
+            <div id="notificationIcon" class="text-2xl"></div>
+            <div class="flex-1">
+                <div id="notificationMessage" class="text-sm text-gray-800"></div>
+            </div>
+            <button onclick="NotificationManager.hideNotification()" class="text-gray-400 hover:text-gray-600">
+                <i class='bx bx-x'></i>
+            </button>
         </div>
     </div>
 </body>

@@ -22,13 +22,14 @@ export class TabManager {
             messagesBtn.classList.add('bg-yellow-600', 'border-orange-600');
             messagesBtn.querySelector('span').classList.add('text-white');
 
-            
+
             panelTitle.textContent = 'Messages';
 
             [groupsList, broadcastList, archivedList, addContactForm].forEach(list => {
                 list.classList.add('hidden');
             });
             contactsList.classList.remove('hidden');
+
 
             import('./contactManager.js').then(({ ContactManager }) => {
                 ContactManager.renderContacts();
@@ -52,12 +53,14 @@ export class TabManager {
         });
 
         broadcastBtn?.addEventListener('click', () => {
+
             [messagesBtn, groupsBtn, broadcastBtn, archiveBtn].forEach(btn => {
                 btn.classList.remove('bg-yellow-600', 'border-orange-600');
                 btn.querySelector('span').classList.remove('text-white');
             });
             broadcastBtn.classList.add('bg-yellow-600', 'border-orange-600');
             broadcastBtn.querySelector('span').classList.add('text-white');
+
             panelTitle.textContent = 'Diffusion';
 
             [contactsList, groupsList, archivedList, addContactForm].forEach(list => {
@@ -76,12 +79,12 @@ export class TabManager {
 
             panelTitle.textContent = 'Archives';
 
+
             [contactsList, groupsList, broadcastList, addContactForm].forEach(list => {
                 list.classList.add('hidden');
             });
 
             archivedList.classList.remove('hidden');
-
 
             import('./archiveManager.js').then(({ ArchiveManager }) => {
                 ArchiveManager.showArchivedList();

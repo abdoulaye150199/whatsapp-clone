@@ -43,7 +43,8 @@ export class DatabaseManager {
 
     static getAllUsers() {
         const users = JSON.parse(localStorage.getItem('users_table') || '[]');
-        return users.filter(user => !user.archived);
+        // Ne retourner que les utilisateurs non archivés
+        return users;
     }
 
     static getActiveUsers() {
@@ -188,22 +189,18 @@ export class DatabaseManager {
         return JSON.parse(localStorage.getItem('group_members_table') || '[]');
     }
 
-    static addGroupMember(groupId, userId) {
+    static addGroupMember(groupId, userId, isAdmin = false) {
         const members = this.getAllGroupMembers();
-        // Vérifier si le membre n'existe pas déjà
-        const existingMember = members.find(m => m.group_id === parseInt(groupId) && m.user_id === parseInt(userId));
-        if (!existingMember) {
-            const newMember = {
-                id: Date.now(),
-                group_id: parseInt(groupId),
-                user_id: parseInt(userId),
-                joined_at: new Date().toISOString()
-            };
-            members.push(newMember);
-            localStorage.setItem('group_members_table', JSON.stringify(members));
-            return newMember;
-        }
-        return existingMember;
+        const newMember = {
+            id: Date.now(),
+            group_id: parseInt(groupId),
+            user_id: userId,
+            is_admin: isAdmin,
+            joined_at: new Date().toISOString()
+        };
+        members.push(newMember);
+        localStorage.setItem('group_members_table', JSON.stringify(members));
+        return newMember;
     }
 
     static getGroupMembers(groupId) {

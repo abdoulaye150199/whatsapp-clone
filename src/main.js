@@ -10,14 +10,14 @@ import { ArchiveManager } from './js/archiveManager.js';
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Initialisation de l\'application');
 
+
+    UserManager.init();
+
     DatabaseManager.initDatabase();
-    console.log('✅ Base de données initialisée');
     
     ContactManager.init();
-    console.log('✅ Contacts initialisés');
     
     TabManager.initializeTabs();
-    console.log('✅ Onglets initialisés');
 
     document.getElementById('newContactBtn').addEventListener('click', () => {
         document.getElementById('addContactForm').classList.remove('hidden');
@@ -80,92 +80,28 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupMessageSystem() {
-    const messageInput = document.querySelector('input[placeholder="Tapez votre message..."]');
-    const sendButton = messageInput?.nextElementSibling;
-    const inputArea = messageInput?.parentElement;
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
 
-    if (messageInput && sendButton && inputArea) {
-        const sendMessage = () => {
-            const message = messageInput.value.trim();
-            if (message && MessageManager.activeContact) {
-                const messagesArea = document.getElementById('Discuter');
-                
-                if (!messagesArea.innerHTML.includes('messagesContainer')) {
-                    messagesArea.innerHTML = '<div class="flex-1 overflow-y-auto space-y-3" id="messagesContainer"></div>';
-                }
+    if (!messageInput || !sendButton) return;
 
-                const container = messagesArea.querySelector('#messagesContainer');
-                if (!container) return;
-                
-                // Ajouter le nouveau message
-                const messageHtml = `
-                    <div class="flex justify-end mb-2">
-                        <div class="message-bubble sent">
-                            <p class="text-sm">${message}</p>
-                            <p class="text-[10px] text-gray-500 text-right mt-1">
-                                ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                <span class="message-status sent">✓</span>
-                            </p>
-                        </div>
-                    </div>
-                `;
-                
-                container.insertAdjacentHTML('beforeend', messageHtml);
-                
-                // Scroll vers le bas
-                container.scrollTop = container.scrollHeight;
-                
-                // Enregistrer le message
-                MessageManager.addMessage(MessageManager.activeContact, message, true);
-                
-                // Vider l'input
-                messageInput.value = '';
-                
-                // Simuler une réponse après 1 seconde
-                setTimeout(() => {
-                    const responses = [
-                        "D'accord !", 
-                        "Je comprends", 
-                        "Merci !", 
-                        "Parfait !", 
-                        "👍",
-                        "Ok, pas de souci",
-                        "Bien reçu"
-                    ];
-                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                    
-                    const replyHtml = `
-                        <div class="flex justify-start mb-2">
-                            <div class="message-bubble received">
-                                <p class="text-sm">${randomResponse}</p>
-                                <p class="text-[10px] text-gray-500 text-right mt-1">
-                                    ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                            </div>
-                        </div>
-                    `;
-                    
-                    container.insertAdjacentHTML('beforeend', replyHtml);
-                    container.scrollTop = container.scrollHeight;
-                    
-                    MessageManager.addMessage(MessageManager.activeContact, randomResponse, false);
-                }, 1000);
-            }
-        };
+    const sendMessage = () => {
+        const message = messageInput.value.trim();
+        if (!message || !MessageManager.activeContact) return;
 
-        // Gestionnaire pour le bouton d'envoi
-        sendButton.addEventListener('click', () => {
+
+        MessageManager.addMessage(MessageManager.activeContact, message, true);
+        messageInput.value = '';
+    };
+
+    sendButton.addEventListener('click', sendMessage);
+
+    messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
             sendMessage();
-        });
-
-        // Gestionnaire pour la touche Entrée
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-    }
+        }
+    });
 }
 
 // Fonctions globales
@@ -215,6 +151,7 @@ window.validatePhoneNumber = (input) => {
 window.addNewContact = () => {
     const nameInput = document.getElementById('contactName');
     const phoneInput = document.getElementById('contactPhone');
+    const phoneError = document.getElementById('phoneError');
     
     const name = nameInput.value.trim();
     const phone = phoneInput.value.trim();
@@ -223,26 +160,34 @@ window.addNewContact = () => {
         alert('Veuillez saisir un nom');
         return;
     }
-    
-    if (!validatePhoneNumber(phoneInput)) {
-        alert('Numéro de téléphone invalide');
-        return;
-    }
 
     const existingUsers = DatabaseManager.getAllUsers();
     const phoneExists = existingUsers.some(user => user.phone === phone);
     
     if (phoneExists) {
-        alert('Ce numéro existe déjà');
+
+        phoneError.textContent = 'Ce numéro existe déjà';
+        phoneError.classList.remove('hidden');
         phoneInput.classList.add('border-red-500');
+        phoneInput.classList.remove('border-green-500');
+        return;
+    }
+
+    if (!validatePhoneNumber(phoneInput)) {
+        phoneError.textContent = 'Numéro de téléphone invalide';
+        phoneError.classList.remove('hidden');
+        phoneInput.classList.add('border-red-500');
+        phoneInput.classList.remove('border-green-500');
         return;
     }
     
     ContactManager.addContact(name, phone);
+    
     nameInput.value = '';
     phoneInput.value = '';
-    document.getElementById('addContactForm').classList.add('hidden');
+    phoneError.classList.add('hidden');
     phoneInput.classList.remove('border-red-500', 'border-green-500');
+    document.getElementById('addContactForm').classList.add('hidden');
 };
 
 window.startBroadcast = () => {
